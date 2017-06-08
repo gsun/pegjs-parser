@@ -375,7 +375,7 @@ ClassCharacterRange
         );
       }
 
-      return [begin, end];
+      return begin + '-' + end;
     }
 
 ClassCharacter
@@ -388,7 +388,7 @@ LineContinuation
 
 EscapeSequence
   = CharacterEscapeSequence
-  / "0" !DecimalDigit { return "\0"; }
+  / "0" !DecimalDigit { return "\u0000"; }
   / HexEscapeSequence
   / UnicodeEscapeSequence
 
@@ -399,13 +399,13 @@ CharacterEscapeSequence
 SingleEscapeCharacter
   = "'"
   / '"'
-  / "\\"
+  / "\\" { return "\\\\"; }
   / "b"  { return "\b"; }
   / "f"  { return "\f"; }
   / "n"  { return "\n"; }
   / "r"  { return "\r"; }
   / "t"  { return "\t"; }
-  / "v"  { return "\v"; }
+  / "v"  { return "\u000B"; }
 
 NonEscapeCharacter
   = !(EscapeCharacter / LineTerminator) SourceCharacter { return text(); }
@@ -423,7 +423,7 @@ HexEscapeSequence
 
 UnicodeEscapeSequence
   = "u" digits:$(HexDigit HexDigit HexDigit HexDigit) {
-      return String.fromCharCode(parseInt(digits, 16));
+      return "\\u" + ("0000" + parseInt(digits, 16).toString(16)).slice(-4);
     }
 
 DecimalDigit
