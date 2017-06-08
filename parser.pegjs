@@ -22,29 +22,29 @@
 // [1] http://www.ecma-international.org/publications/standards/Ecma-262.htm
 
 {
-  const OPS_TO_PREFIXED_TYPES = {
-    "$": "text",
-    "&": "simple_and",
-    "!": "simple_not"
-  };
+  var OPS_TO_PREFIXED_TYPES = [
+    "$" => "text",
+    "&" => "simple_and",
+    "!" => "simple_not"
+  ];
 
-  const OPS_TO_SUFFIXED_TYPES = {
-    "?": "optional",
-    "*": "zero_or_more",
-    "+": "one_or_more"
-  };
+  var OPS_TO_SUFFIXED_TYPES = [
+    "?" => "optional",
+    "*" => "zero_or_more",
+    "+" => "one_or_more"
+  ];
 
-  const OPS_TO_SEMANTIC_PREDICATE_TYPES = {
-    "&": "semantic_and",
-    "!": "semantic_not"
-  };
+  var OPS_TO_SEMANTIC_PREDICATE_TYPES = [
+    "&" => "semantic_and",
+    "!" => "semantic_not"
+  ];
 
   function extractOptional(optional, index) {
-    return optional ? optional[index] : null;
+    return optional != null ? optional[index] : null;
   }
 
   function extractList(list, index) {
-    return list.map(element => element[index]);
+    return list.map(function (element) { return element[index];});
   }
 
   function buildList(head, tail, index) {
