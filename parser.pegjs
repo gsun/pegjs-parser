@@ -388,7 +388,7 @@ LineContinuation
 
 EscapeSequence
   = CharacterEscapeSequence
-  / "0" !DecimalDigit { return "\0"; }
+  / "0" !DecimalDigit { return "\u0000"; }
   / HexEscapeSequence
   / UnicodeEscapeSequence
 
@@ -405,7 +405,7 @@ SingleEscapeCharacter
   / "n"  { return "\n"; }
   / "r"  { return "\r"; }
   / "t"  { return "\t"; }
-  / "v"  { return "\v"; }
+  / "v"  { return "\u000B"; }
 
 NonEscapeCharacter
   = !(EscapeCharacter / LineTerminator) SourceCharacter { return text(); }
