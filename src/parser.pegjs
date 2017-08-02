@@ -22,29 +22,29 @@
 // [1] http://www.ecma-international.org/publications/standards/Ecma-262.htm
 
 {
-  var OPS_TO_PREFIXED_TYPES = [
-    "$" => "text",
-    "&" => "simple_and",
-    "!" => "simple_not"
-  ];
+  const OPS_TO_PREFIXED_TYPES = {
+    "$": "text",
+    "&": "simple_and",
+    "!": "simple_not"
+  };
 
-  var OPS_TO_SUFFIXED_TYPES = [
-    "?" => "optional",
-    "*" => "zero_or_more",
-    "+" => "one_or_more"
-  ];
+  const OPS_TO_SUFFIXED_TYPES = {
+    "?": "optional",
+    "*": "zero_or_more",
+    "+": "one_or_more"
+  };
 
-  var OPS_TO_SEMANTIC_PREDICATE_TYPES = [
-    "&" => "semantic_and",
-    "!" => "semantic_not"
-  ];
+  const OPS_TO_SEMANTIC_PREDICATE_TYPES = {
+    "&": "semantic_and",
+    "!": "semantic_not"
+  };
 
   function extractOptional(optional, index) {
-    return optional != null ? optional[index] : null;
+    return optional ? optional[index] : null;
   }
 
   function extractList(list, index) {
-    return list.map(function (element) { return element[index];});
+    return list.map(element => element[index]);
   }
 
   function buildList(head, tail, index) {
@@ -180,7 +180,7 @@ PrimaryExpression
       // nodes that already isolate label scope themselves. This leaves us with
       // "labeled" and "sequence".
       return expression.type === "labeled" || expression.type === "sequence"
-          ? { type: "group", expression: expression }
+          ? { type: "group", expression: expression, location: location() }
           : expression;
     }
 
@@ -388,7 +388,7 @@ LineContinuation
 
 EscapeSequence
   = CharacterEscapeSequence
-  / "0" !DecimalDigit { return "\u0000"; }
+  / "0" !DecimalDigit { return "\0"; }
   / HexEscapeSequence
   / UnicodeEscapeSequence
 
@@ -405,7 +405,7 @@ SingleEscapeCharacter
   / "n"  { return "\n"; }
   / "r"  { return "\r"; }
   / "t"  { return "\t"; }
-  / "v"  { return "\u000B"; }
+  / "v"  { return "\v"; }
 
 NonEscapeCharacter
   = !(EscapeCharacter / LineTerminator) SourceCharacter { return text(); }

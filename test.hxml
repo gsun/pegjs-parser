@@ -1,0 +1,8 @@
+-cp src
+-cp test
+-main Test 
+-js bin\Test.js
+-lib hxnodejs
+-resource arithmetics.pegjs@pegjs
+-cmd copy src\parser.js bin\parser.js
+-cmd copy test\arithmetics.pegjs bin\arithmetics.pegjs
