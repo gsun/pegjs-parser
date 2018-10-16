@@ -58,15 +58,19 @@ Grammar
   = __ initializer:(Initializer __)? rules:(Rule __)+ {
       return {
         type: "grammar",
-        initializer: extractOptional(initializer, 0),
-        rules: extractList(rules, 0),
+        arg: null,
+        subs: extractOptional(initializer, 0) ? [extractOptional(initializer, 0), ...extractList(rules, 0)]:extractList(rules, 0),
         location: location()
       };
     }
 
 Initializer
   = code:CodeBlock EOS {
-      return { type: "initializer", code: code, location: location() };
+      return { type: "initializer", 
+               arg: null,
+               subs: [code],
+               location: location() 
+            };
     }
 
 Rule
@@ -77,62 +81,53 @@ Rule
     {
       return {
         type: "rule",
-        name: name,
-        expression: displayName !== null
-          ? {
+        arg: name,
+        subs: [{
               type: "named",
-              name: displayName[0],
-              expression: expression,
+              arg: displayName !== null ? displayName[0]:null,
+              subs: [expression],
               location: location()
-            }
-          : expression,
+            }],
         location: location()
       };
     }
 
 Expression
-  = ChoiceExpression
-
-ChoiceExpression
   = head:ActionExpression tail:(__ "/" __ ActionExpression)* {
-      return tail.length > 0
-        ? {
+      return {
             type: "choice",
-            alternatives: buildList(head, tail, 3),
+            arg: null,
+            subs: tail.length > 0 ? buildList(head, tail, 3):[head],
             location: location()
-          }
-        : head;
+          };
     }
 
 ActionExpression
   = expression:SequenceExpression code:(__ CodeBlock)? {
-      return code !== null
-        ? {
+      return {
             type: "action",
-            expression: expression,
-            code: code[1],
+            arg: null,
+            subs: code !== null ? [expression, code[1]]:[expression],
             location: location()
-          }
-        : expression;
+          };
     }
 
 SequenceExpression
   = head:LabeledExpression tail:(__ LabeledExpression)* {
-      return tail.length > 0
-        ? {
+      return {
             type: "sequence",
-            elements: buildList(head, tail, 1),
+            arg: null,
+            subs: tail.length > 0 ? buildList(head, tail, 1):[head],
             location: location()
-          }
-        : head;
+          };
     }
 
 LabeledExpression
   = label:Identifier __ ":" __ expression:PrefixedExpression {
       return {
         type: "labeled",
-        label: label,
-        expression: expression,
+        arg: label,
+        subs: [expression],
         location: location()
       };
     }
@@ -142,7 +137,8 @@ PrefixedExpression
   = operator:PrefixedOperator __ expression:SuffixedExpression {
       return {
         type: OPS_TO_PREFIXED_TYPES[operator],
-        expression: expression,
+        arg: null,
+        subs: [expression],
         location: location()
       };
     }
@@ -157,7 +153,8 @@ SuffixedExpression
   = expression:PrimaryExpression __ operator:SuffixedOperator {
       return {
         type: OPS_TO_SUFFIXED_TYPES[operator],
-        expression: expression,
+        arg: null,
+        subs: [expression],
         location: location()
       };
     }
@@ -174,26 +171,31 @@ PrimaryExpression
   / AnyMatcher
   / RuleReferenceExpression
   / SemanticPredicateExpression
-  / "(" __ expression:Expression __ ")" {
-      // The purpose of the "group" AST node is just to isolate label scope. We
-      // don't need to put it around nodes that can't contain any labels or
-      // nodes that already isolate label scope themselves. This leaves us with
-      // "labeled" and "sequence".
-      return expression.type === "labeled" || expression.type === "sequence"
-          ? { type: "group", expression: expression, location: location() }
-          : expression;
-    }
+  / GroupExpression
 
+GroupExpression
+  = "(" __ expression:Expression __ ")" {
+      return { type: "group", 
+               arg: null, 
+               subs: [expression], 
+               location: location() 
+             };
+    }
+    
 RuleReferenceExpression
   = name:IdentifierName !(__ (StringLiteral __)? "=") {
-      return { type: "rule_ref", name: name, location: location() };
+      return { type: "rule_ref", 
+               arg: name, 
+               subs: [], 
+               location: location() };
     }
 
 SemanticPredicateExpression
   = operator:SemanticPredicateOperator __ code:CodeBlock {
       return {
         type: OPS_TO_SEMANTIC_PREDICATE_TYPES[operator],
-        code: code,
+        arg: null,
+        subs: [code],
         location: location()
       };
     }
@@ -331,8 +333,8 @@ LiteralMatcher "literal"
   = value:StringLiteral ignoreCase:"i"? {
       return {
         type: "literal",
-        value: value,
-        ignoreCase: ignoreCase !== null,
+        arg: text(),
+        subs: [],
         location: location()
       };
     }
@@ -360,9 +362,8 @@ CharacterClassMatcher "character class"
     {
       return {
         type: "class",
-        parts: parts.filter(part => part !== ""),
-        inverted: inverted !== null,
-        ignoreCase: ignoreCase !== null,
+        arg: text(),
+        subs: [],
         location: location()
       };
     }
@@ -433,10 +434,21 @@ HexDigit
   = [0-9a-f]i
 
 AnyMatcher
-  = "." { return { type: "any", location: location() }; }
+  = "." { return { type: "any", 
+                   arg: null,
+                   subs: [],
+                   location: location() 
+                 }; 
+        }
 
 CodeBlock "code block"
-  = "{" code:Code "}" { return code; }
+  = "{" code:Code "}" { return { type: "code", 
+                                 arg: code,
+                                 subs: [], 
+                                 location: location() 
+                               }; 
+                      }
+  / "{" { error("Unbalanced brace."); }
 
 Code
   = $((![{}] SourceCharacter)+ / "{" Code "}")*
